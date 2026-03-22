@@ -4,5 +4,5 @@ type mainServiceUrls string
 
 const (
 	reportError   mainServiceUrls = "reportError"
-	reportMetrics mainServiceUrls = "reportError"
+	reportMetrics mainServiceUrls = "reportMetrics"
 )
