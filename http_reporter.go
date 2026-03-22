@@ -46,8 +46,8 @@ func (h *httpReporter) ReportError(ctx context.Context, errorEvent ErrorEvent) e
 
 	req.Header.Set("Content-Type", "application/json")
 
-	if h.config.AuthHeaderName != "" && h.config.AuthHeaderValue != "" {
-		req.Header.Set(h.config.AuthHeaderName, h.config.AuthHeaderValue)
+	for _, value := range h.config.Headers {
+		req.Header.Set(value.HeaderName, value.HeaderValue)
 	}
 
 	resp, err := h.client.Do(req)
@@ -87,8 +87,8 @@ func (h *httpReporter) ReportMetrics(ctx context.Context, snapshot Snapshot) err
 
 	req.Header.Set("Content-Type", "application/json")
 
-	if h.config.AuthHeaderName != "" && h.config.AuthHeaderValue != "" {
-		req.Header.Set(h.config.AuthHeaderName, h.config.AuthHeaderValue)
+	for _, value := range h.config.Headers {
+		req.Header.Set(value.HeaderName, value.HeaderValue)
 	}
 
 	resp, err := h.client.Do(req)
