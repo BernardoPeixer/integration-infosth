@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -79,6 +80,9 @@ func (h *httpReporter) ReportMetrics(ctx context.Context, snapshot Snapshot) err
 
 	path := h.config.BaseUrl + "/" + reportMetricsUrl
 
+	slog.Info("config", h.config.BaseUrl)
+	slog.Info("config", reportMetricsUrl)
+	slog.Info("config", path)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path, bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("error in newRequest (path): %w", err)
