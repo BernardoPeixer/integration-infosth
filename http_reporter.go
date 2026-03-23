@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -31,14 +30,13 @@ func (h *httpReporter) ReportError(ctx context.Context, errorEvent ErrorEvent) e
 		return fmt.Errorf("error in marshal: %w", err)
 	}
 
-	baseUrl := strings.TrimSuffix(h.config.BaseUrl, "/")
-	reportErrorUrl := strings.TrimPrefix(h.config.MetricsPath, "/")
+	reportErrorUrl := h.config.ErrorPath
 
 	if reportErrorUrl == "" {
 		reportErrorUrl = string(reportError)
 	}
 
-	path := baseUrl + "/" + reportErrorUrl
+	path := buildURLPath(h.config.BaseUrl, reportErrorUrl)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path, bytes.NewBuffer(body))
 	if err != nil {
@@ -78,11 +76,7 @@ func (h *httpReporter) ReportMetrics(ctx context.Context, snapshot Snapshot) err
 		reportMetricsUrl = string(reportMetrics)
 	}
 
-	path := h.config.BaseUrl + "/" + reportMetricsUrl
-
-	slog.Info("config", h.config.BaseUrl)
-	slog.Info("config", reportMetricsUrl)
-	slog.Info("config", path)
+	path := buildURLPath(h.config.BaseUrl, reportMetricsUrl)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path, bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("error in newRequest (path): %w", err)
@@ -107,4 +101,11 @@ func (h *httpReporter) ReportMetrics(ctx context.Context, snapshot Snapshot) err
 	}
 
 	return nil
+}
+
+func buildURLPath(baseURL, endpointPath string) string {
+	baseURL = strings.TrimSuffix(baseURL, "/")
+	endpointPath = strings.TrimPrefix(endpointPath, "/")
+
+	return baseURL + "/" + endpointPath
 }
