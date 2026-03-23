@@ -71,14 +71,13 @@ func (h *httpReporter) ReportMetrics(ctx context.Context, snapshot Snapshot) err
 		return fmt.Errorf("error in marshal: %w", err)
 	}
 
-	baseUrl := strings.TrimSuffix(h.config.BaseUrl, "/")
-	reportMetricsUrl := strings.TrimPrefix(h.config.MetricsPath, "/")
+	reportMetricsUrl := h.config.MetricsPath
 
 	if reportMetricsUrl == "" {
 		reportMetricsUrl = string(reportMetrics)
 	}
 
-	path := baseUrl + "/" + reportMetricsUrl
+	path := h.config.BaseUrl + "/" + reportMetricsUrl
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path, bytes.NewBuffer(body))
 	if err != nil {
