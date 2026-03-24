@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -69,6 +70,8 @@ func (h *httpReporter) ReportMetrics(ctx context.Context, snapshot Snapshot) err
 	if err != nil {
 		return fmt.Errorf("error in marshal: %w", err)
 	}
+
+	slog.Info("body", "processed snapshot", string(body))
 
 	reportMetricsUrl := h.config.MetricsPath
 
