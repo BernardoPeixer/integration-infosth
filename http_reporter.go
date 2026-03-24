@@ -65,7 +65,7 @@ func (h *httpReporter) ReportError(ctx context.Context, errorEvent ErrorEvent) e
 }
 
 func (h *httpReporter) ReportMetrics(ctx context.Context, snapshot Snapshot) error {
-	body, err := json.Marshal(snapshot)
+	body, err := marshalMetricsSnapshot(snapshot)
 	if err != nil {
 		return fmt.Errorf("error in marshal: %w", err)
 	}
@@ -101,6 +101,34 @@ func (h *httpReporter) ReportMetrics(ctx context.Context, snapshot Snapshot) err
 	}
 
 	return nil
+}
+
+func marshalMetricsSnapshot(snapshot Snapshot) ([]byte, error) {
+	items := make([]map[string]any, 0, len(snapshot.Items))
+
+	for _, item := range snapshot.Items {
+		items = append(items, map[string]any{
+			"route":           item.Route,
+			"method":          item.Method,
+			"request_count":   item.RequestCount,
+			"success_count":   item.SuccessCount,
+			"error_count":     item.ErrorCount,
+			"duration_sum_ms": item.DurationSumMs,
+			"max_latency_ms":  item.MaxLatencyMs,
+			"status_2xx":      item.Status2xx,
+			"status_4xx":      item.Status4xx,
+			"status_5xx":      item.Status5xx,
+		})
+	}
+
+	payload := map[string]any{
+		"service":      snapshot.Service,
+		"window_start": snapshot.WindowStart,
+		"window_end":   snapshot.WindowEnd,
+		"items":        items,
+	}
+
+	return json.Marshal(payload)
 }
 
 func buildURLPath(baseURL, endpointPath string) string {
