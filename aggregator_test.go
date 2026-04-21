@@ -171,6 +171,7 @@ func TestAggregator_SnapshotAndReset(t *testing.T) {
 			wantStatus2xx:     0,
 			wantStatus4xx:     0,
 			wantStatus5xx:     0,
+			wantGroups:        0,
 		},
 		{
 			name: "single call",
@@ -185,6 +186,7 @@ func TestAggregator_SnapshotAndReset(t *testing.T) {
 			wantStatus2xx:     1,
 			wantStatus4xx:     0,
 			wantStatus5xx:     0,
+			wantGroups:        1,
 		},
 		{
 			name: "multiple calls with same route",
@@ -200,6 +202,7 @@ func TestAggregator_SnapshotAndReset(t *testing.T) {
 			wantStatus2xx:     1,
 			wantStatus4xx:     1,
 			wantStatus5xx:     0,
+			wantGroups:        1,
 		},
 		{
 			name: "multiple calls with different routes",
@@ -215,6 +218,7 @@ func TestAggregator_SnapshotAndReset(t *testing.T) {
 			wantStatus2xx:     1,
 			wantStatus4xx:     1,
 			wantStatus5xx:     0,
+			wantGroups:        2,
 		},
 	}
 
@@ -230,12 +234,41 @@ func TestAggregator_SnapshotAndReset(t *testing.T) {
 
 			snapshot := a.SnapshotAndReset()
 
-			assert.Equal(t, len(a.data), 0)
-			assert.Equal(t, "test", snapshot.Service)
+			totalRequests := uint64(0)
+			totalSuccesses := uint64(0)
+			totalErrors := uint64(0)
+			totalDurationSumMs := uint64(0)
+			totalStatus2xx := uint64(0)
+			totalStatus4xx := uint64(0)
+			totalStatus5xx := uint64(0)
+			maxLatencyMs := uint64(0)
 
-			if len(tt.calls) == 0 {
-				assert.Equal(t, len(snapshot.Items), 0)
+			for _, item := range snapshot.Items {
+				if item.MaxLatencyMs > maxLatencyMs {
+					maxLatencyMs = item.MaxLatencyMs
+				}
+
+				totalRequests += item.RequestCount
+				totalSuccesses += item.SuccessCount
+				totalErrors += item.ErrorCount
+				totalDurationSumMs += item.DurationSumMs
+				totalStatus2xx += item.Status2xx
+				totalStatus4xx += item.Status4xx
+				totalStatus5xx += item.Status5xx
 			}
+
+			assert.Equal(t, tt.wantRequests, totalRequests, "total requests")
+			assert.Equal(t, tt.wantSuccesses, totalSuccesses, "total successes")
+			assert.Equal(t, tt.wantErrors, totalErrors, "total errors")
+			assert.Equal(t, tt.wantDurationSumMs, totalDurationSumMs, "total duration sum ms")
+			assert.Equal(t, tt.wantStatus2xx, totalStatus2xx, "total status 2xx")
+			assert.Equal(t, tt.wantStatus4xx, totalStatus4xx, "total status 4xx")
+			assert.Equal(t, tt.wantStatus5xx, totalStatus5xx, "total status 5xx")
+			assert.Equal(t, tt.wantMaxLatencyMs, maxLatencyMs, "max latency ms")
+			assert.Equal(t, tt.wantGroups, uint64(len(snapshot.Items)), "total groups")
+
+			assert.Len(t, a.data, 0, "data length")
+			assert.Equal(t, "test", snapshot.Service, "service")
 		})
 	}
 }
